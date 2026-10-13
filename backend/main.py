@@ -202,6 +202,10 @@ def analyze_single_url(request: URLAnalysisRequest):
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 if os.path.exists(FRONTEND_DIR):
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+    for sub in ["css", "js", "assets"]:
+        sub_dir = os.path.join(FRONTEND_DIR, sub)
+        if os.path.exists(sub_dir):
+            app.mount(f"/{sub}", StaticFiles(directory=sub_dir), name=sub)
 
 @app.get("/")
 def serve_index():

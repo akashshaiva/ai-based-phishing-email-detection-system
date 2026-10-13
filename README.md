@@ -157,3 +157,40 @@ Total Risk Score: 100.0%
 - `GET /api/history` — Returns recent audit scan logs.
 - `GET /api/health` — Engine health and capabilities status.
 - `GET /docs` — Interactive OpenAPI / Swagger UI.
+
+---
+
+## 🚀 Deployment Guide
+
+### Option 1: Full-Stack on Render (Simplest & Recommended — 100% Free)
+Because the FastAPI backend automatically serves the frontend dashboard at `/`, you can deploy both together with 1 click:
+1. Push your project to GitHub.
+2. Sign in to [Render](https://render.com) and click **New +** > **Web Service**.
+3. Select your repository.
+4. Render automatically detects `render.yaml` (or set:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT --app-dir backend`
+5. Click **Deploy Web Service**. Once deployed, opening your Render URL (`https://your-app.onrender.com`) serves the complete web dashboard with the backend pre-connected!
+
+### Option 2: Deploy Frontend on Vercel
+1. Sign in to [Vercel](https://vercel.com) and click **Add New** > **Project**.
+2. Select your repository.
+3. In the project settings, set:
+   - **Root Directory**: `./` (or `frontend`)
+   - **Build & Development Settings**: Output Directory is pre-configured via [`vercel.json`](file:///c:/Users/User/OneDrive/Desktop/ai%20based%20phishing%20email%20%20detection%20system/vercel.json) to `frontend`.
+4. Click **Deploy**.
+5. Once your site is live, open the dashboard, click **Settings (⚙️)** in the top right, enter your deployed backend URL in **Remote Backend API URL**, and click **Save Configuration**.
+
+### Option 3: Deploy Frontend on Netlify
+1. Sign in to [Netlify](https://netlify.com) and click **Add new site** > **Import an existing project**.
+2. Select your repository.
+3. Netlify automatically reads [`netlify.toml`](file:///c:/Users/User/OneDrive/Desktop/ai%20based%20phishing%20email%20%20detection%20system/netlify.toml) with Publish directory set to `frontend`.
+4. Click **Deploy Site**.
+5. Open your live site, click **Settings (⚙️)**, enter your backend URL, and click **Save Configuration**.
+
+### Option 4: Deploy Frontend on GitHub Pages
+1. Go to your repository on GitHub > **Settings** > **Pages**.
+2. Under **Build and deployment** > Source: select **GitHub Actions** or **Deploy from a branch**.
+3. If deploying from a branch, select `main` and folder `/docs` (or copy `frontend` into `docs/`).
+4. Once deployed, open the Settings modal on the dashboard to connect your backend API.
+

@@ -16,8 +16,16 @@ const state = {
   ocrExtractedText: '',
   isScanning: false,
   lastAnalysisResult: null,
-  geminiApiKey: localStorage.getItem('phish_gemini_api_key') || ''
+  geminiApiKey: localStorage.getItem('phish_gemini_api_key') || '',
+  apiBaseUrl: localStorage.getItem('phish_api_base_url') || (window.API_BASE || '')
 };
+
+// Returns fully-qualified API URL if apiBaseUrl is configured, else relative path
+function getApiUrl(endpoint) {
+  const base = (state.apiBaseUrl || '').trim().replace(/\/+$/, '');
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return base ? `${base}${path}` : path;
+}
 
 // DOM Element Selectors
 const elements = {
@@ -96,6 +104,7 @@ const elements = {
   btnCloseSettings: document.getElementById('btnCloseSettings'),
   modalSettings: document.getElementById('modalSettings'),
   inputGeminiKey: document.getElementById('inputGeminiKey'),
+  inputApiBase: document.getElementById('inputApiBase'),
   btnSaveSettings: document.getElementById('btnSaveSettings')
 };
 
@@ -114,6 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (state.geminiApiKey && elements.inputGeminiKey) {
     elements.inputGeminiKey.value = state.geminiApiKey;
+  }
+  if (state.apiBaseUrl && elements.inputApiBase) {
+    elements.inputApiBase.value = state.apiBaseUrl;
   }
 });
 
@@ -336,7 +348,7 @@ async function submitScreenshotAnalysis() {
       mime_type: state.selectedImageFile ? state.selectedImageFile.type : 'image/png'
     };
 
-    const response = await fetch('/api/analyze/image-base64', {
+    const response = await fetch(getApiUrl('/api/analyze/image-base64'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -387,7 +399,7 @@ async function submitTextAnalysis() {
       gemini_api_key: state.geminiApiKey
     };
 
-    const response = await fetch('/api/analyze/text', {
+    const response = await fetch(getApiUrl('/api/analyze/text'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -424,7 +436,7 @@ function setupUrlHandlers() {
       elements.btnAnalyzeUrl.disabled = true;
       elements.btnAnalyzeUrl.textContent = "Scanning...";
 
-      const res = await fetch('/api/analyze/url', {
+      const res = await fetch(getApiUrl('/api/analyze/url'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
@@ -469,7 +481,7 @@ function renderSingleUrlResult(data) {
 // ============================================================================
 async function loadSampleEmails() {
   try {
-    const res = await fetch('/api/samples');
+    const res = await fetch(getApiUrl('/api/samples'));
     if (!res.ok) return;
     const data = await res.json();
     renderSampleChips(data.samples || []);
@@ -720,6 +732,13 @@ function setupModalsAndDrawers() {
   elements.btnSaveSettings.addEventListener('click', () => {
     state.geminiApiKey = elements.inputGeminiKey.value.trim();
     localStorage.setItem('phish_gemini_api_key', state.geminiApiKey);
+
+    if (elements.inputApiBase) {
+      state.apiBaseUrl = elements.inputApiBase.value.trim().replace(/\/+$/, '');
+      localStorage.setItem('phish_api_base_url', state.apiBaseUrl);
+    }
+
+    checkSystemHealth();
     closeSettingsModal();
     alert("Settings updated successfully!");
   });
@@ -730,7 +749,7 @@ async function openHistoryDrawer() {
   elements.drawerHistory.classList.add('open');
   
   try {
-    const res = await fetch('/api/history');
+    const res = await fetch(getApiUrl('/api/history'));
     if (!res.ok) return;
     const data = await res.json();
     renderHistoryList(data.history || []);
@@ -773,6 +792,8 @@ function renderHistoryList(history) {
 }
 
 function openSettingsModal() {
+  if (elements.inputGeminiKey) elements.inputGeminiKey.value = state.geminiApiKey || '';
+  if (elements.inputApiBase) elements.inputApiBase.value = state.apiBaseUrl || '';
   elements.drawerBackdrop.style.display = 'block';
   elements.modalSettings.classList.add('open');
 }
@@ -810,7 +831,7 @@ function escapeHtml(str) {
 
 async function checkSystemHealth() {
   try {
-    const res = await fetch('/api/health');
+    const res = await fetch(getApiUrl('/api/health'));
     if (res.ok) {
       const data = await res.json();
       const dot = document.getElementById('systemHealthDot');
